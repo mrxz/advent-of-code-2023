@@ -12,65 +12,46 @@ let input = [
     "#OO..#....",
 ]
 
+const height = input.length;
+const width = input[0].length;
+
 // Part 1
-let board = {};
-const getKey = (x,y) => `${x}x${y}`;
+const board = new Array(width, height);
+const getKey = (x,y) => y*width + x;
 const setValue = (board, x, y, value) => {
     board[getKey(x, y)] = value;
 }
 const getValue = (board, x, y, fallback = null) => {
-    return board[getKey(x, y)] || fallback
-}
-const printBoard = (board, xi, yi, width, height) => {
-    for(let y = yi; y < height; y++) {
-        let line = ""
-        for(let x = xi; x < width; x++) {
-            line += getValue(board, x, y, '.');
-        }
-        console.log(line);
-    }
+    if(x < 0 || y < 0 || x >= width || y >= height) return fallback;
+    return board[getKey(x, y)]
 }
 
 // Parse
 let stones = [];
 
-const height = input.length;
-const width = input[0].length;
 for(let y = 0; y < input.length; y++) {
     for(let x = 0; x < input[y].length; x++) {
         let c = input[y][x];
         if(c === 'O') {
-            stones.push({x, y});
-            setValue(board, x, y, '.');
+            const stone = {x, y};
+            stones.push(stone);
+            setValue(board, x, y, stone);
         } else {
             setValue(board, x, y, c);
         }
     }
 }
 
-function getAt(x, y, excludeStone) {
+function tilt(dir) {
+    stones.sort((a,b) => (a.x - b.x) * -dir.x + (a.y - b.y) * -dir.y);
     for(let stone of stones) {
-        if(stone === excludeStone) continue;
-        if(stone.x == x && stone.y == y) {
-            return 'O';
+        while(getValue(board, stone.x + dir.x, stone.y + dir.y, '#') === '.') {
+            setValue(board, stone.x, stone.y, '.');
+            stone.x += dir.x;
+            stone.y += dir.y;
+            setValue(board, stone.x, stone.y, stone);
         }
     }
-
-    return getValue(board, x, y, '#');
-}
-
-function tilt(dir) {
-    let changed = false;
-    do {
-        changed = false;
-        for(let stone of stones) {
-            if(getAt(stone.x + dir.x, stone.y + dir.y, stone) === '.') {
-                stone.x += dir.x;
-                stone.y += dir.y;
-                changed = true;
-            }
-        }
-    } while(changed);
 }
 
 function computeSum() {
